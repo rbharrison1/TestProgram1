@@ -9,14 +9,8 @@ import java.util.List;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        //String filePath = "C:\\Users\\rharrison15\\Desktop\\TestFile.txt";
-        String filePath = "C:\\Users\\ryneb\\Desktop\\NBA_Standings.json";
-        //String replace = filePath.replace("\\", "\\\\");
-        //URL url = new URL("https://erikberg.com/nba/standings.json");
+        String filePath = "NBA_Standings.json";
         BufferedReader br;
-
-        //URLConnection con = url.openConnection();
-        //InputStream is = con.getInputStream();
 
         br = new BufferedReader(new FileReader(filePath));
         ObjectMapper mapper = new ObjectMapper();
