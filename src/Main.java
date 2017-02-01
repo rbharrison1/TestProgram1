@@ -1,45 +1,185 @@
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+import javax.swing.*;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        String filePath = "NBA_Standings.json";
+
+        String body = "";
+        HttpURLConnection con = (HttpURLConnection)new URL("https://api.stattleship.com/basketball/nba/games?on=yesterday").openConnection();
+        con.setRequestMethod("GET");
+        con.setRequestProperty("Accept","application/vnd.stattleship.com; version=1");
+        con.setRequestProperty("Content-Type","application/json");
+        con.setRequestProperty("Authorization","Token token=1f502063a6723c09c5b3d76809b3ed2b");
+        con.connect();
+
+        InputStream is = con.getInputStream();
+
         BufferedReader br;
 
-        br = new BufferedReader(new FileReader(filePath));
+        br = new BufferedReader(new InputStreamReader(is));
+
         ObjectMapper mapper = new ObjectMapper();
-        Standings standings = mapper.readValue(br, Standings.class);
-        Standing team;
+        JsonNode node = mapper.readValue(br, JsonNode.class);
 
-        String[] date = standings.standings_date.split("T");
-        System.out.println("Date: " + date[0]);
-        System.out.println("NBA Eastern Conference Standings");
-        System.out.println("\t\t\t\t\tW\tL\t%\t\tGB");
+        int length;
 
-        for (int x = 0; x < 15; x++)
-        {
-            team = standings.standing.get(x);
-            System.out.println(String.format("%1$2s", team.rank) + ") " + String.format("%1$13s", team.last_name) + "\t" + team.won + "\t" + team.lost + "\t" + team.win_percentage + "\t" + team.games_back);
+        JsonNode games = node.get("games");
+        String date = games.findValue("on").toString();
+        length = date.length();
+        date = date.substring(4,length - 1);
+        System.out.println(date);
+        body += "<h1>" + date + "</h1>";
+
+        JsonNode awayTeams = node.get("away_teams");
+        List<String> away = new ArrayList<>();
+        String name = "";
+        for (JsonNode awayTeam : awayTeams) {
+            name = awayTeam.get("name").toString();
+            name = name.replaceAll("\"", "");
+            away.add(name);
         }
+
+        JsonNode homeTeams = node.get("home_teams");
+        List<String> home = new ArrayList<>();
+        for (JsonNode homeTeam : homeTeams) {
+            name = homeTeam.get("name").toString();
+            name = name.replaceAll("\"", "");
+            home.add(name);
+        }
+
+        List<String> awayScores = new ArrayList<>();
+        List<String> homeScores = new ArrayList<>();
+        String awayScore;
+        String homeScore;
+        for (JsonNode game : games) {
+            awayScore = game.get("away_team_score").toString();
+            homeScore = game.get("home_team_score").toString();
+            awayScores.add(awayScore);
+            homeScores.add(homeScore);
+        }
+
+        int i = 0;
+        for (String x : away) {
+            body += "<table style=\"border: 2px groove black;padding: 10px\"><tr style=\"border: 2px groove black;padding: 10px\"><td style=\"border: 2px groove black;padding: 10px\">" + away.get(i) + "</td><td style=\"border: 2px groove black;padding: 10px\">" + awayScores.get(i) + "</td></tr>";
+            body += "<tr style=\"border: 2px groove black;padding: 10px\"><td style=\"border: 2px groove black;padding: 10px\">" + home.get(i) + "</td><td style=\"border: 2px groove black;padding: 10px\">" + homeScores.get(i) + "</td></tr></table>";
+            body += "<br> </br>";
+            i++;
+        }
+        
+        br.close();
+        con.disconnect();
+
+
+        //end of first connection
+
 
         System.out.println();
-        System.out.println("NBA Western Conference Standings");
-        System.out.println("\t\t\t\t\tW\tL\t%\t\tGB");
+        body += "<br> </br>";
 
-        for (int x = 15; x < 30; x++)
+
+        //start of second connection
+
+        try {
+            //HttpURLConnection con2 = (HttpURLConnection) new URL("https://erikberg.com/nba/standings.json").openConnection();
+            //con2.setRequestMethod("GET");
+            //con2.connect();
+
+            //InputStream is2 = con2.getInputStream();
+            FileReader fr = new FileReader("NBA_Standings.json");
+
+            //br = new BufferedReader(new InputStreamReader(is2));
+            br = new BufferedReader(fr);
+
+            ObjectMapper mapper2 = new ObjectMapper();
+            Standings standings = mapper2.readValue(br, Standings.class);
+            Standing team;
+
+            System.out.println("NBA Eastern Conference Standings");
+            System.out.println("\t\t\t\t\tW\tL\t%\t\tGB");
+            body += "NBA Eastern Conference Standings\n";
+
+            body += "<table style=\"border: 2px groove black;padding: 10px\"><tr style=\"border: 2px groove black;padding: 10px\"><th style=\"border: 2px groove black;padding: 10px\"></th><th style=\"border: 2px groove black;padding: 10px\"></th><th style=\"border: 2px groove black;padding: 10px\">W</th><th style=\"border: 2px groove black;padding: 10px\">L</th><th style=\"border: 2px groove black;padding: 10px\">%</th><th style=\"border: 2px groove black;padding: 10px\">GB</th></tr>";
+            for (int x = 0; x < 15; x++) {
+                team = standings.standing.get(x);
+                System.out.println(String.format("%1$2s", team.rank) + ") " + String.format("%1$13s", team.first_name) + "\t" + team.won + "\t" + team.lost + "\t" + team.win_percentage + "\t" + team.games_back);
+                body += "<tr style=\"border: 2px groove black;padding: 10px\"><td style=\"border: 2px groove black;padding: 10px\">" + String.format("%1$2s", team.rank) + "</td><td style=\"border: 2px groove black;padding: 10px\">" + String.format("%1$13s", team.first_name) + "</td><td style=\"border: 2px groove black;padding: 10px\">" + team.won + "</td><td style=\"border: 2px groove black;padding: 10px\">" + team.lost + "</td><td style=\"border: 2px groove black;padding: 10px\">" + team.win_percentage + "</td><td style=\"border: 2px groove black;padding: 10px\">" + team.games_back + "</td></tr>";
+            }
+            body += "</table>";
+            body += "<br> </br>";
+
+            System.out.println();
+            System.out.println("NBA Western Conference Standings");
+            System.out.println("\t\t\t\t\tW\tL\t%\t\tGB");
+            body += "\nNBA Western Conference Standings\n";
+
+            body += "<table style=\"border: 2px groove black;padding: 10px\"><tr style=\"border: 2px groove black;padding: 10px\"><th style=\"border: 2px groove black;padding: 10px\"></th><th style=\"border: 2px groove black;padding: 10px\"></th><th style=\"border: 2px groove black;padding: 10px\">W</th><th style=\"border: 2px groove black;padding: 10px\">L</th><th style=\"border: 2px groove black;padding: 10px\">%</th><th style=\"border: 2px groove black;padding: 10px\">GB</th></tr>";
+            for (int x = 15; x < 30; x++) {
+                team = standings.standing.get(x);
+                System.out.println(String.format("%1$2s", team.rank) + ") " + String.format("%1$13s", team.first_name) + "\t" + team.won + "\t" + team.lost + "\t" + team.win_percentage + "\t" + team.games_back);
+                body += "<tr style=\"border: 2px groove black;padding: 10px\"><td style=\"border: 2px groove black;padding: 10px\">" + String.format("%1$2s", team.rank) + "</td><td style=\"border: 2px groove black;padding: 10px\">" + String.format("%1$13s", team.first_name) + "</td><td style=\"border: 2px groove black;padding: 10px\">" + team.won + "</td><td style=\"border: 2px groove black;padding: 10px\">" + team.lost + "</td><td style=\"border: 2px groove black;padding: 10px\">" + team.win_percentage + "</td><td style=\"border: 2px groove black;padding: 10px\">" + team.games_back + "</td></tr>";
+            }
+            body += "</table>";
+
+            //br.close();
+            //con2.disconnect();
+        }
+        catch (IOException e)
         {
-            team = standings.standing.get(x);
-            System.out.println(String.format("%1$2s", team.rank) + ") " + String.format("%1$13s", team.last_name) + "\t" + team.won + "\t" + team.lost + "\t" + team.win_percentage + "\t" + team.games_back);
+            System.out.println("Error generating standings.");
+            body += "Error generating standings.";
         }
 
-        br.close();
+        String username = "rynebharrison@gmail.com";
+        String password = "***************";  //insert password here
+        String to = "rbharrison1@crimson.ua.edu";
+        String subject = "Yesterday's NBA Wrap-up";
+        String email_body = body;
+        doSendMail(username,password,to,subject,email_body);
 
+    }
+
+    public static void doSendMail(final String username, final String password, String to, String subject, String email_body) {
+
+        Properties props = new Properties();
+        props.put("mail.smtp.host", "smtp.gmail.com");
+        props.put("mail.smtp.socketFactory.port", "587");
+        props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.ssl.trust", "*");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.port", "587");
+
+        Session session = Session.getDefaultInstance(props, new javax.mail.Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(username, password);
+            }
+        });
+        try {
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(username));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+            message.setSubject(subject);
+            message.setContent(email_body, "text/html");
+            Transport.send(message);
+            System.out.println("message sent");
+        } catch (Exception e) {
+            System.out.println(e);
+            JOptionPane.showMessageDialog(null, e.toString());
+        }
     }
 
     public static class Standings {
