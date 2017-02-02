@@ -12,10 +12,76 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.zip.GZIPInputStream;
 
 public class Main {
 
+    static final String ACCESS_TOKEN = "***************************";
+
+    static final String USER_AGENT = "User-agent";
+
+    static final String USER_AGENT_CONTACT = "***********************"; //email
+
+    static final String USER_AGENT_NAME = "nba-standings/%s (%s)";
+
+    static final String VERSION = "$(version)";
+
+    static final String AUTHORIZATION = "Authorization";
+
+    static final String BEARER_AUTH_TOKEN = "Bearer %s";
+
+    static final String ACCEPT_ENCODING = "Accept-encoding";
+
+    static final String GZIP = "gzip";
+
+    // For brevity, the url with api method, format, and parameters
+    static final String REQUEST_URL = "https://erikberg.com/nba/standings.json";
+
     public static void main(String[] args) throws IOException {
+
+        String accessToken = String.format(BEARER_AUTH_TOKEN, ACCESS_TOKEN);
+        String userAgent = String.format(USER_AGENT_NAME,
+                VERSION,
+                USER_AGENT_CONTACT);
+/*
+        try {
+            URL url = new URL(REQUEST_URL);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            // Set Authorization header
+            connection.setRequestProperty(AUTHORIZATION, accessToken);
+            // Set User agent header
+            connection.setRequestProperty(USER_AGENT, userAgent);
+            // Tell server we can handle gzip content
+            connection.setRequestProperty(ACCEPT_ENCODING, GZIP);
+
+            // Check the HTTP status code for "200 OK"
+            int statusCode = connection.getResponseCode();
+            String encoding = connection.getContentEncoding();
+            if (statusCode != HttpURLConnection.HTTP_OK) {
+                System.err.printf("Server returned HTTP status: %s. %s%n%n",
+                        statusCode, connection.getResponseMessage());
+                System.exit(1);
+            }
+
+            InputStream in = connection.getInputStream();
+            // Ensure there is data
+            if (in == null) {
+                System.err.println("Response is empty.");
+                System.exit(1);
+            }
+
+            // Decompress response if it is compressed
+            if (GZIP.equals(encoding)) {
+                in = new GZIPInputStream(in);
+            }
+
+            printResult(in);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+         */
 
         String body = "";
         HttpURLConnection con = (HttpURLConnection)new URL("https://api.stattleship.com/basketball/nba/games?on=yesterday").openConnection();
@@ -41,7 +107,8 @@ public class Main {
         length = date.length();
         date = date.substring(4,length - 1);
         System.out.println(date);
-        body += "<h1>" + date + "</h1>";
+        
+        body += "<h3>Here's all that happened in the NBA yesterday, " + date + ".</h3>";
 
         JsonNode awayTeams = node.get("away_teams");
         List<String> away = new ArrayList<>();
@@ -71,11 +138,22 @@ public class Main {
             homeScores.add(homeScore);
         }
 
-        int i = 0;
+        body += "<div>";
+        int i = 1;
         for (String x : away) {
-            body += "<table style=\"border: 2px groove black;padding: 10px\"><tr style=\"border: 2px groove black;padding: 10px\"><td style=\"border: 2px groove black;padding: 10px\">" + away.get(i) + "</td><td style=\"border: 2px groove black;padding: 10px\">" + awayScores.get(i) + "</td></tr>";
-            body += "<tr style=\"border: 2px groove black;padding: 10px\"><td style=\"border: 2px groove black;padding: 10px\">" + home.get(i) + "</td><td style=\"border: 2px groove black;padding: 10px\">" + homeScores.get(i) + "</td></tr></table>";
-            body += "<br> </br>";
+            if ((i-1) % 4 == 0 && i != 2)
+            {
+                body += "<div>";
+            }
+
+            body += "<table style=\"border: 2px groove black;padding: 5px;display: inline-table;width: 120px;table-layout: fixed\"><tr style=\"border: 2px groove black;padding: 5px\"><td style=\"border: 2px groove black;padding: 5px;width: 100px\">" + away.get(i - 1) + "</td><td style=\"border: 2px groove black;padding: 5px;width: 20px;text-align: right\">" + awayScores.get(i - 1) + "</td></tr>";
+            body += "<tr style=\"border: 2px groove black;padding: 5px\"><td style=\"border: 2px groove black;padding: 5px;width: 100px\">" + home.get(i - 1) + "</td><td style=\"border: 2px groove black;padding: 5px;width: 20px;text-align: right\">" + homeScores.get(i - 1) + "</td></tr></table>";
+
+            if(i % 4 == 0 && i != 1)
+            {
+                body += "</div>";
+            }
+
             i++;
         }
         
@@ -92,49 +170,101 @@ public class Main {
 
         //start of second connection
 
+
+
         try {
-            //HttpURLConnection con2 = (HttpURLConnection) new URL("https://erikberg.com/nba/standings.json").openConnection();
+            URL url = new URL(REQUEST_URL);
+            HttpURLConnection con2 = (HttpURLConnection) url.openConnection();
+            // Set Authorization header
+            con2.setRequestProperty(AUTHORIZATION, accessToken);
+            // Set User agent header
+            con2.setRequestProperty(USER_AGENT, userAgent);
+            // Tell server we can handle gzip content
+            con2.setRequestProperty(ACCEPT_ENCODING, GZIP);
+
+            // Check the HTTP status code for "200 OK"
+            int statusCode = con2.getResponseCode();
+            String encoding = con2.getContentEncoding();
+            if (statusCode != HttpURLConnection.HTTP_OK) {
+                System.err.printf("Server returned HTTP status: %s. %s%n%n",
+                        statusCode, con2.getResponseMessage());
+                System.exit(1);
+            }
+
+            InputStream is2 = con2.getInputStream();
+            // Ensure there is data
+            if (is2 == null) {
+                System.err.println("Response is empty.");
+                System.exit(1);
+            }
+
+            // Decompress response if it is compressed
+            if (GZIP.equals(encoding)) {
+                is2 = new GZIPInputStream(is2);
+            }
+
+            //HttpsURLConnection con2 = (HttpsURLConnection) new URL("https://erikberg.com/nba/standings.json").openConnection();
             //con2.setRequestMethod("GET");
+            //con2.setRequestProperty("Authorization","Bearer 4219b74c-c244-47cf-bb02-eb358c749980");
+            //con2.setRequestProperty("Content-Type","application/json;charset=UTF-8");
             //con2.connect();
 
             //InputStream is2 = con2.getInputStream();
-            FileReader fr = new FileReader("NBA_Standings.json");
+            //FileReader fr = new FileReader("NBA_Standings.json");
 
-            //br = new BufferedReader(new InputStreamReader(is2));
-            br = new BufferedReader(fr);
+            br = new BufferedReader(new InputStreamReader(is2));
+            //br = new BufferedReader(fr);
 
             ObjectMapper mapper2 = new ObjectMapper();
             Standings standings = mapper2.readValue(br, Standings.class);
             Standing team;
 
+            body += "<table style=\"border: 2px groove black;padding: 5px;display: inline-table;width: 591px;table-layout: fixed\">";
+
             System.out.println("NBA Eastern Conference Standings");
             System.out.println("\t\t\t\t\tW\tL\t%\t\tGB");
-            body += "NBA Eastern Conference Standings\n";
+            body += "<tr><td style=\"border: 2px groove black;padding: 5px;text-align: center;width: 295.5px\">NBA Eastern Conference Standings</td>";
 
-            body += "<table style=\"border: 2px groove black;padding: 10px\"><tr style=\"border: 2px groove black;padding: 10px\"><th style=\"border: 2px groove black;padding: 10px\"></th><th style=\"border: 2px groove black;padding: 10px\"></th><th style=\"border: 2px groove black;padding: 10px\">W</th><th style=\"border: 2px groove black;padding: 10px\">L</th><th style=\"border: 2px groove black;padding: 10px\">%</th><th style=\"border: 2px groove black;padding: 10px\">GB</th></tr>";
-            for (int x = 0; x < 15; x++) {
-                team = standings.standing.get(x);
-                System.out.println(String.format("%1$2s", team.rank) + ") " + String.format("%1$13s", team.first_name) + "\t" + team.won + "\t" + team.lost + "\t" + team.win_percentage + "\t" + team.games_back);
-                body += "<tr style=\"border: 2px groove black;padding: 10px\"><td style=\"border: 2px groove black;padding: 10px\">" + String.format("%1$2s", team.rank) + "</td><td style=\"border: 2px groove black;padding: 10px\">" + String.format("%1$13s", team.first_name) + "</td><td style=\"border: 2px groove black;padding: 10px\">" + team.won + "</td><td style=\"border: 2px groove black;padding: 10px\">" + team.lost + "</td><td style=\"border: 2px groove black;padding: 10px\">" + team.win_percentage + "</td><td style=\"border: 2px groove black;padding: 10px\">" + team.games_back + "</td></tr>";
-            }
-            body += "</table>";
-            body += "<br> </br>";
 
             System.out.println();
             System.out.println("NBA Western Conference Standings");
             System.out.println("\t\t\t\t\tW\tL\t%\t\tGB");
-            body += "\nNBA Western Conference Standings\n";
+            body += "<td style=\"border: 2px groove black;padding: 5px;text-align: center;width: 295.5px\">NBA Western Conference Standings</td></tr></table><div>";
 
-            body += "<table style=\"border: 2px groove black;padding: 10px\"><tr style=\"border: 2px groove black;padding: 10px\"><th style=\"border: 2px groove black;padding: 10px\"></th><th style=\"border: 2px groove black;padding: 10px\"></th><th style=\"border: 2px groove black;padding: 10px\">W</th><th style=\"border: 2px groove black;padding: 10px\">L</th><th style=\"border: 2px groove black;padding: 10px\">%</th><th style=\"border: 2px groove black;padding: 10px\">GB</th></tr>";
-            for (int x = 15; x < 30; x++) {
+            String teamName;
+
+            body += "<table style=\"border: 2px groove black;padding: 5px;display: inline-table;width: 225px;table-layout: fixed\"><tr style=\"border: 2px groove black;padding: 5px\"><th style=\"border: 2px groove black;padding: 5px;width: 25px\"></th><th style=\"border: 2px groove black;padding: 5px;width: 100px\"></th><th style=\"border: 2px groove black;padding: 5px;width: 25px\">W</th><th style=\"border: 2px groove black;padding: 5px;width: 25px\">L</th><th style=\"border: 2px groove black;padding: 5px;width: 25px\">%</th><th style=\"border: 2px groove black;padding: 5px;width: 25px\">GB</th></tr>";
+            for (int x = 0; x < 15; x++) {
                 team = standings.standing.get(x);
-                System.out.println(String.format("%1$2s", team.rank) + ") " + String.format("%1$13s", team.first_name) + "\t" + team.won + "\t" + team.lost + "\t" + team.win_percentage + "\t" + team.games_back);
-                body += "<tr style=\"border: 2px groove black;padding: 10px\"><td style=\"border: 2px groove black;padding: 10px\">" + String.format("%1$2s", team.rank) + "</td><td style=\"border: 2px groove black;padding: 10px\">" + String.format("%1$13s", team.first_name) + "</td><td style=\"border: 2px groove black;padding: 10px\">" + team.won + "</td><td style=\"border: 2px groove black;padding: 10px\">" + team.lost + "</td><td style=\"border: 2px groove black;padding: 10px\">" + team.win_percentage + "</td><td style=\"border: 2px groove black;padding: 10px\">" + team.games_back + "</td></tr>";
+
+                teamName = team.first_name;
+
+                System.out.println(String.format("%1$2s", team.rank) + ") " + String.format("%1$13s", teamName) + "\t" + team.won + "\t" + team.lost + "\t" + team.win_percentage + "\t" + team.games_back);
+                body += "<tr style=\"border: 2px groove black;padding: 5px\"><td style=\"border: 2px groove black;padding: 5px;width: 25px;text-align: center\">" + String.format("%1$2s", team.rank) + "</td><td style=\"border: 2px groove black;padding: 5px;width: 100px\">" + String.format("%1$13s", teamName) + "</td><td style=\"border: 2px groove black;padding: 5px;width: 25px;text-align: center\">" + team.won + "</td><td style=\"border: 2px groove black;padding: 5px;width: 25px;text-align: center\">" + team.lost + "</td><td style=\"border: 2px groove black;padding: 5px;width: 25px;text-align: center\">" + team.win_percentage + "</td><td style=\"border: 2px groove black;padding: 5px;width: 25px;text-align: center\">" + team.games_back + "</td></tr>";
             }
             body += "</table>";
 
-            //br.close();
-            //con2.disconnect();
+
+            body += "<table style=\"border: 2px groove black;padding: 5px;display: inline-table;width: 225px;table-layout: fixed\"><tr style=\"border: 2px groove black;padding: 5px\"><th style=\"border: 2px groove black;padding: 5px;width: 25px\"></th><th style=\"border: 2px groove black;padding: 5px;width: 100px\"></th><th style=\"border: 2px groove black;padding: 5px;width: 25px\">W</th><th style=\"border: 2px groove black;padding: 5px;width: 25px\">L</th><th style=\"border: 2px groove black;padding: 5px;width: 25px\">%</th><th style=\"border: 2px groove black;padding: 5px;width: 25px\">GB</th></tr>";
+            for (int x = 15; x < 30; x++) {
+                team = standings.standing.get(x);
+
+                if (team.first_name.equals("Los Angeles"))
+                {
+                    teamName = "L.A. " + team.last_name;
+                }
+                else
+                {
+                    teamName = team.first_name;
+                }
+
+                System.out.println(String.format("%1$2s", team.rank) + ") " + String.format("%1$13s", teamName) + "\t" + team.won + "\t" + team.lost + "\t" + team.win_percentage + "\t" + team.games_back);
+                body += "<tr style=\"border: 2px groove black;padding: 5px\"><td style=\"border: 2px groove black;padding: 5px;width: 25px;text-align: center\">" + String.format("%1$2s", team.rank) + "</td><td style=\"border: 2px groove black;padding: 5px;width: 100px\">" + String.format("%1$13s", teamName) + "</td><td style=\"border: 2px groove black;padding: 5px;width: 25px;text-align: center\">" + team.won + "</td><td style=\"border: 2px groove black;padding: 5px;width: 25px;text-align: center\">" + team.lost + "</td><td style=\"border: 2px groove black;padding: 5px;width: 25px;text-align: center\">" + team.win_percentage + "</td><td style=\"border: 2px groove black;padding: 5px;width: 25px;text-align: center\">" + team.games_back + "</td></tr>";
+            }
+            body += "</table></div></div>";
+
+            br.close();
+            con2.disconnect();
         }
         catch (IOException e)
         {
@@ -142,9 +272,9 @@ public class Main {
             body += "Error generating standings.";
         }
 
-        String username = "rynebharrison@gmail.com";
-        String password = "***************";  //insert password here
-        String to = "rbharrison1@crimson.ua.edu";
+        String username = "*********************"; //from
+        String password = "**************";  //insert password here
+        String to = "*****************"; //to
         String subject = "Yesterday's NBA Wrap-up";
         String email_body = body;
         doSendMail(username,password,to,subject,email_body);
