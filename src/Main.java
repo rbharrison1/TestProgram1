@@ -43,45 +43,6 @@ public class Main {
         String userAgent = String.format(USER_AGENT_NAME,
                 VERSION,
                 USER_AGENT_CONTACT);
-/*
-        try {
-            URL url = new URL(REQUEST_URL);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            // Set Authorization header
-            connection.setRequestProperty(AUTHORIZATION, accessToken);
-            // Set User agent header
-            connection.setRequestProperty(USER_AGENT, userAgent);
-            // Tell server we can handle gzip content
-            connection.setRequestProperty(ACCEPT_ENCODING, GZIP);
-
-            // Check the HTTP status code for "200 OK"
-            int statusCode = connection.getResponseCode();
-            String encoding = connection.getContentEncoding();
-            if (statusCode != HttpURLConnection.HTTP_OK) {
-                System.err.printf("Server returned HTTP status: %s. %s%n%n",
-                        statusCode, connection.getResponseMessage());
-                System.exit(1);
-            }
-
-            InputStream in = connection.getInputStream();
-            // Ensure there is data
-            if (in == null) {
-                System.err.println("Response is empty.");
-                System.exit(1);
-            }
-
-            // Decompress response if it is compressed
-            if (GZIP.equals(encoding)) {
-                in = new GZIPInputStream(in);
-            }
-
-            printResult(in);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
-
-         */
 
         String body = "";
         HttpURLConnection con = (HttpURLConnection)new URL("https://api.stattleship.com/basketball/nba/games?on=yesterday").openConnection();
